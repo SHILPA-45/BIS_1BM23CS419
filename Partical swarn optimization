@@ -1,0 +1,105 @@
+import numpy as np
+
+# Define the Sphere function (objective function)
+def sphere_function(x):
+    return np.sum(x**2)  # Sum of squares of the vector x
+
+# Particle Swarm Optimization (PSO) Class
+class PSO:
+    def __init__(self, func, dim, num_particles=30, max_iter=100, w=0.5, c1=1.5, c2=1.5, bounds=(-5.12, 5.12)):
+        self.func = func  # Objective function to minimize
+        self.dim = dim  # Number of dimensions
+        self.num_particles = num_particles  # Number of particles in the swarm
+        self.max_iter = max_iter  # Maximum number of iterations
+        self.w = w  # Inertia weight
+        self.c1 = c1  # Cognitive coefficient
+        self.c2 = c2  # Social coefficient
+        self.bounds = bounds  # Search space bounds
+
+        # Initialize particles' positions and velocities
+        self.positions = np.random.uniform(self.bounds[0], self.bounds[1], (self.num_particles, self.dim))
+        self.velocities = np.random.uniform(-1, 1, (self.num_particles, self.dim))
+
+        # Initialize personal bests and global best
+        self.personal_best_positions = np.copy(self.positions)
+        self.personal_best_scores = np.array([func(p) for p in self.positions])
+        self.global_best_position = self.personal_best_positions[np.argmin(self.personal_best_scores)]
+        self.global_best_score = np.min(self.personal_best_scores)
+
+    def update_velocity(self, i):
+        # Update the velocity of particle i
+        r1, r2 = np.random.rand(2)  # Random coefficients
+        cognitive_velocity = self.c1 * r1 * (self.personal_best_positions[i] - self.positions[i])
+        social_velocity = self.c2 * r2 * (self.global_best_position - self.positions[i])
+        inertia_velocity = self.w * self.velocities[i]
+        return inertia_velocity + cognitive_velocity + social_velocity
+
+    def update_position(self, i):
+        # Update the position of particle i
+        self.positions[i] += self.velocities[i]
+        # Apply bounds to ensure the particles stay within the search space
+        self.positions[i] = np.clip(self.positions[i], self.bounds[0], self.bounds[1])
+
+    def optimize(self):
+        # PSO optimization loop
+        for iteration in range(self.max_iter):
+            for i in range(self.num_particles):
+                # Evaluate fitness of each particle
+                fitness = self.func(self.positions[i])
+
+                # Update personal best position if the current position is better
+                if fitness < self.personal_best_scores[i]:
+                    self.personal_best_scores[i] = fitness
+                    self.personal_best_positions[i] = self.positions[i]
+
+            # Update global best position if any particle has found a better solution
+            min_score_idx = np.argmin(self.personal_best_scores)
+            if self.personal_best_scores[min_score_idx] < self.global_best_score:
+                self.global_best_score = self.personal_best_scores[min_score_idx]
+                self.global_best_position = self.personal_best_positions[min_score_idx]
+
+            # Update the velocity and position of each particle
+            for i in range(self.num_particles):
+                self.velocities[i] = self.update_velocity(i)
+                self.update_position(i)
+
+            # Print progress
+            print(f"Iteration {iteration + 1}/{self.max_iter}, Best Score: {self.global_best_score}")
+
+        return self.global_best_position, self.global_best_score
+
+# Create PSO instance and optimize the Sphere function
+pso = PSO(func=sphere_function, dim=2, num_particles=30, max_iter=20, w=0.5, c1=1.5, c2=1.5, bounds=(-5.12, 5.12))
+
+# Run the optimization
+best_position, best_score = pso.optimize()
+
+# Output the best solution found
+print(f"\nOptimal Solution: {best_position}")
+print(f"Optimal Score (Objective value): {best_score}")
+
+
+output:
+Iteration 1/20, Best Score: 2.060270869748399
+Iteration 2/20, Best Score: 0.5116307948614877
+Iteration 3/20, Best Score: 0.1418629234929626
+Iteration 4/20, Best Score: 0.03152430899696504
+Iteration 5/20, Best Score: 0.008270319869508219
+Iteration 6/20, Best Score: 0.008270319869508219
+Iteration 7/20, Best Score: 0.00019450730030548316
+Iteration 8/20, Best Score: 0.00019450730030548316
+Iteration 9/20, Best Score: 0.00019450730030548316
+Iteration 10/20, Best Score: 0.00019450730030548316
+Iteration 11/20, Best Score: 0.00010686252873084136
+Iteration 12/20, Best Score: 0.00010686252873084136
+Iteration 13/20, Best Score: 6.0562623510675125e-05
+Iteration 14/20, Best Score: 5.779191299326719e-05
+Iteration 15/20, Best Score: 4.2520276645769985e-05
+Iteration 16/20, Best Score: 3.492304409944512e-05
+Iteration 17/20, Best Score: 2.906819219530648e-05
+Iteration 18/20, Best Score: 2.8431495771934007e-05
+Iteration 19/20, Best Score: 1.535505697752837e-05
+Iteration 20/20, Best Score: 2.0590321646596323e-06
+
+Optimal Solution: [-0.00101324 -0.00101606]
+Optimal Score (Objective value): 2.0590321646596323e-06
