@@ -1,0 +1,167 @@
+import numpy as np
+
+# 1. Define the optimization function (e.g., a simple Sphere function)
+def objective_function(x):
+    return np.sum(x**2)  # Sphere function: f(x) = sum(x^2)
+
+# 2. Generate a new solution using Lévy flight
+def levy_flight(Lambda, dim):
+    # Lévy flight formula (random walk with power-law step sizes)
+    step = np.random.randn(dim) * np.power(np.abs(np.random.randn(dim)), 1 / Lambda)
+    return step
+
+# 3. Cuckoo Search Algorithm
+def cuckoo_search(objective_function, num_nests=25, max_iter=100, pa=0.25, Lambda=1.5, dim=5):
+    # Step 1: Initialize population (nests) with random positions
+    nests = np.random.uniform(-10, 10, (num_nests, dim))
+    fitness = np.apply_along_axis(objective_function, 1, nests)  # Evaluate fitness of each nest
+
+    best_nest = nests[np.argmin(fitness)]  # Best solution found so far
+    best_fitness = np.min(fitness)
+
+    # Step 2: Start the iterations
+    for iteration in range(max_iter):
+        # Step 3: Generate new solutions (Lévy flights)
+        new_nests = np.copy(nests)
+        for i in range(num_nests):
+            step = levy_flight(Lambda, dim)  # Lévy flight step for nest i
+            new_nests[i] = nests[i] + step  # Create new solution
+
+            # Bound the new solution within search space (-10 to 10)
+            new_nests[i] = np.clip(new_nests[i], -10, 10)
+
+        # Step 4: Evaluate new solutions
+        new_fitness = np.apply_along_axis(objective_function, 1, new_nests)
+
+        # Step 5: Abandon worst nests (keep best ones)
+        for i in range(num_nests):
+            if new_fitness[i] < fitness[i]:  # If new nest is better
+                nests[i] = new_nests[i]  # Replace old nest with new one
+                fitness[i] = new_fitness[i]  # Update fitness
+
+        # Step 6: Randomly abandon some nests and generate new ones
+        for i in range(int(pa * num_nests)):
+            random_index = np.random.randint(0, num_nests)
+            nests[random_index] = np.random.uniform(-10, 10, dim)  # Replace with new random nest
+            fitness[random_index] = objective_function(nests[random_index])  # Evaluate new nest
+
+        # Step 7: Update the best solution found so far
+        current_best_fitness = np.min(fitness)
+        if current_best_fitness < best_fitness:
+            best_fitness = current_best_fitness
+            best_nest = nests[np.argmin(fitness)]
+
+        print(f"Iteration {iteration+1}: Best fitness = {best_fitness}")
+
+    return best_nest, best_fitness
+
+# Run the Cuckoo Search Algorithm
+best_solution, best_fitness = cuckoo_search(objective_function)
+print("\nBest solution found:", best_solution)
+print("Best fitness value:", best_fitness)
+
+
+Output:
+Iteration 1: Best fitness = 33.87142691843498
+Iteration 2: Best fitness = 32.140577686951985
+Iteration 3: Best fitness = 20.704302381567
+Iteration 4: Best fitness = 20.704302381567
+Iteration 5: Best fitness = 20.704302381567
+Iteration 6: Best fitness = 20.704302381567
+Iteration 7: Best fitness = 20.704302381567
+Iteration 8: Best fitness = 20.704302381567
+Iteration 9: Best fitness = 20.704302381567
+Iteration 10: Best fitness = 20.704302381567
+Iteration 11: Best fitness = 19.685266155354785
+Iteration 12: Best fitness = 19.361012550004133
+Iteration 13: Best fitness = 19.361012550004133
+Iteration 14: Best fitness = 19.361012550004133
+Iteration 15: Best fitness = 19.361012550004133
+Iteration 16: Best fitness = 19.361012550004133
+Iteration 17: Best fitness = 19.361012550004133
+Iteration 18: Best fitness = 19.361012550004133
+Iteration 19: Best fitness = 19.361012550004133
+Iteration 20: Best fitness = 19.361012550004133
+Iteration 21: Best fitness = 19.361012550004133
+Iteration 22: Best fitness = 19.361012550004133
+Iteration 23: Best fitness = 19.361012550004133
+Iteration 24: Best fitness = 19.361012550004133
+Iteration 25: Best fitness = 19.361012550004133
+Iteration 26: Best fitness = 19.361012550004133
+Iteration 27: Best fitness = 19.361012550004133
+Iteration 28: Best fitness = 19.361012550004133
+Iteration 29: Best fitness = 19.361012550004133
+Iteration 30: Best fitness = 19.361012550004133
+Iteration 31: Best fitness = 19.361012550004133
+Iteration 32: Best fitness = 19.361012550004133
+Iteration 33: Best fitness = 19.361012550004133
+Iteration 34: Best fitness = 19.361012550004133
+Iteration 35: Best fitness = 19.361012550004133
+Iteration 36: Best fitness = 19.361012550004133
+Iteration 37: Best fitness = 19.361012550004133
+Iteration 38: Best fitness = 19.361012550004133
+Iteration 39: Best fitness = 19.361012550004133
+Iteration 40: Best fitness = 19.361012550004133
+Iteration 41: Best fitness = 19.361012550004133
+Iteration 42: Best fitness = 18.281829101152166
+Iteration 43: Best fitness = 17.965820221899772
+Iteration 44: Best fitness = 17.437524577206215
+Iteration 45: Best fitness = 15.590363183022987
+Iteration 46: Best fitness = 9.346728277808793
+Iteration 47: Best fitness = 7.350393136229822
+Iteration 48: Best fitness = 7.350393136229822
+Iteration 49: Best fitness = 7.350393136229822
+Iteration 50: Best fitness = 7.350393136229822
+Iteration 51: Best fitness = 7.350393136229822
+Iteration 52: Best fitness = 7.350393136229822
+Iteration 53: Best fitness = 7.350393136229822
+Iteration 54: Best fitness = 7.350393136229822
+Iteration 55: Best fitness = 7.350393136229822
+Iteration 56: Best fitness = 7.350393136229822
+Iteration 57: Best fitness = 7.350393136229822
+Iteration 58: Best fitness = 7.350393136229822
+Iteration 59: Best fitness = 7.350393136229822
+Iteration 60: Best fitness = 7.350393136229822
+Iteration 61: Best fitness = 7.350393136229822
+Iteration 62: Best fitness = 7.350393136229822
+Iteration 63: Best fitness = 7.350393136229822
+Iteration 64: Best fitness = 7.350393136229822
+Iteration 65: Best fitness = 7.350393136229822
+Iteration 66: Best fitness = 7.350393136229822
+Iteration 67: Best fitness = 7.350393136229822
+Iteration 68: Best fitness = 7.350393136229822
+Iteration 69: Best fitness = 7.350393136229822
+Iteration 70: Best fitness = 7.350393136229822
+Iteration 71: Best fitness = 7.350393136229822
+Iteration 72: Best fitness = 7.350393136229822
+Iteration 73: Best fitness = 7.350393136229822
+Iteration 74: Best fitness = 7.350393136229822
+Iteration 75: Best fitness = 7.350393136229822
+Iteration 76: Best fitness = 7.350393136229822
+Iteration 77: Best fitness = 7.350393136229822
+Iteration 78: Best fitness = 7.350393136229822
+Iteration 79: Best fitness = 7.350393136229822
+Iteration 80: Best fitness = 7.350393136229822
+Iteration 81: Best fitness = 7.350393136229822
+Iteration 82: Best fitness = 7.350393136229822
+Iteration 83: Best fitness = 7.350393136229822
+Iteration 84: Best fitness = 7.350393136229822
+Iteration 85: Best fitness = 7.350393136229822
+Iteration 86: Best fitness = 7.350393136229822
+Iteration 87: Best fitness = 7.350393136229822
+Iteration 88: Best fitness = 7.350393136229822
+Iteration 89: Best fitness = 7.350393136229822
+Iteration 90: Best fitness = 7.350393136229822
+Iteration 91: Best fitness = 7.350393136229822
+Iteration 92: Best fitness = 7.350393136229822
+Iteration 93: Best fitness = 7.350393136229822
+Iteration 94: Best fitness = 7.350393136229822
+Iteration 95: Best fitness = 7.350393136229822
+Iteration 96: Best fitness = 7.350393136229822
+Iteration 97: Best fitness = 7.350393136229822
+Iteration 98: Best fitness = 7.350393136229822
+Iteration 99: Best fitness = 7.350393136229822
+Iteration 100: Best fitness = 7.350393136229822
+
+Best solution found: [9.63406814 6.95069564 4.28564439 0.28223965 8.57643064]
+Best fitness value: 7.350393136229822
