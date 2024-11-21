@@ -1,0 +1,120 @@
+import numpy as np
+import random
+
+# Step 1: Define the Problem (cities and coordinates)
+def create_cities(n=5):
+    """Generate a set of cities with random coordinates."""
+    cities = np.random.rand(n, 2) * 100  # Random coordinates in a 100x100 grid
+    return cities
+
+# Step 2: Initialize Parameters
+class ACO:
+    def __init__(self, cities, num_ants=10, alpha=1, beta=2, rho=0.1, Q=100, max_iter=500):
+        self.cities = cities
+        self.num_ants = num_ants  # Number of ants
+        self.alpha = alpha        # Importance of pheromone
+        self.beta = beta          # Importance of heuristic (distance)
+        self.rho = rho            # Pheromone evaporation rate
+        self.Q = Q                # Pheromone deposit factor
+        self.max_iter = max_iter  # Number of iterations
+        self.n = len(cities)      # Number of cities
+        self.pheromone = np.ones((self.n, self.n))  # Initial pheromone levels
+        self.distance_matrix = self._compute_distances()  # Distance matrix between cities
+
+    def _compute_distances(self):
+        """Compute the distance matrix between all cities."""
+        distances = np.zeros((self.n, self.n))
+        for i in range(self.n):
+            for j in range(i + 1, self.n):
+                dist = np.linalg.norm(self.cities[i] - self.cities[j])  # Euclidean distance
+                distances[i][j] = distances[j][i] = dist
+        return distances
+
+    def _select_next_city(self, current_city, visited_cities):
+        """Select the next city based on pheromone and distance heuristic."""
+        probabilities = []
+        for city in range(self.n):
+            if city not in visited_cities:
+                pheromone = self.pheromone[current_city][city] ** self.alpha
+                heuristic = (1.0 / self.distance_matrix[current_city][city]) ** self.beta
+                probability = pheromone * heuristic
+                probabilities.append(probability)
+            else:
+                probabilities.append(0)
+        
+        # Normalize the probabilities
+        total_probability = sum(probabilities)
+        probabilities = [p / total_probability for p in probabilities]
+        
+        # Select the next city based on probabilities (roulette wheel selection)
+        next_city = np.random.choice(self.n, p=probabilities)
+        return next_city
+
+    def _update_pheromones(self, solutions):
+        """Update pheromone levels based on the solutions found by ants."""
+        self.pheromone *= (1 - self.rho)  # Evaporate pheromones
+
+        for solution, length in solutions:
+            for i in range(len(solution) - 1):
+                city1, city2 = solution[i], solution[i + 1]
+                self.pheromone[city1][city2] += self.Q / length
+                self.pheromone[city2][city1] += self.Q / length  # Since it's undirected
+
+    def _construct_solution(self):
+        """Construct a solution (tour) for a single ant."""
+        start_city = random.randint(0, self.n - 1)  # Random start city
+        visited_cities = [start_city]
+        current_city = start_city
+
+        # Construct the tour by visiting cities
+        for _ in range(self.n - 1):
+            next_city = self._select_next_city(current_city, visited_cities)
+            visited_cities.append(next_city)
+            current_city = next_city
+        
+        # Complete the tour by returning to the start city
+        visited_cities.append(start_city)
+
+        # Calculate the total length of the tour
+        tour_length = sum(self.distance_matrix[visited_cities[i]][visited_cities[i+1]] for i in range(self.n))
+
+        return visited_cities, tour_length
+
+    def solve(self):
+        """Solve the TSP using ACO."""
+        best_solution = None
+        best_length = float('inf')
+
+        # Start iterations
+        for iteration in range(self.max_iter):
+            solutions = []
+
+            # Each ant constructs a solution
+            for _ in range(self.num_ants):
+                solution, length = self._construct_solution()
+                solutions.append((solution, length))
+                if length < best_length:
+                    best_solution = solution
+                    best_length = length
+            
+            # Update pheromones after all ants have constructed their solutions
+            self._update_pheromones(solutions)
+
+            print(f"Iteration {iteration + 1}: Best Length = {best_length}")
+
+        return best_solution, best_length
+
+# Step 3: Run the ACO Algorithm
+# Generate random cities
+cities = create_cities(n=10)
+
+# Initialize ACO solver
+aco = ACO(cities, num_ants=20, max_iter=100)
+
+# Solve TSP
+best_solution, best_length = aco.solve()
+
+# Step 4: Output the Best Solution
+print("\nBest Solution Found:")
+print("Tour:", best_solution)
+print("Tour Length:", best_length)
