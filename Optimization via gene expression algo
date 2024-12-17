@@ -1,0 +1,131 @@
+import numpy as np
+import random
+
+# Step 1: Define the Problem
+# Sphere Function: f(x) = sum(x_i^2), where x is a vector
+def fitness_function(solution):
+    return np.sum(np.array(solution) ** 2)
+
+# Step 2: Initialize Parameters
+population_size = 20       # Number of genetic sequences
+num_genes = 10             # Length of each genetic sequence (dimensionality)
+mutation_rate = 0.1        # Probability of mutation
+crossover_rate = 0.7       # Probability of crossover
+generations = 25          # Number of generations
+gene_bounds = [-5.0, 5.0]  # Range of values for each gene
+
+# Step 3: Initialize Population
+def initialize_population(population_size, num_genes, bounds):
+    population = []
+    for _ in range(population_size):
+        individual = [random.uniform(bounds[0], bounds[1]) for _ in range(num_genes)]
+        population.append(individual)
+    return population
+
+# Step 4: Evaluate Fitness
+def evaluate_population(population):
+    fitness_scores = [fitness_function(individual) for individual in population]
+    return fitness_scores
+
+# Step 5: Selection (Tournament Selection)
+def tournament_selection(population, fitness_scores, tournament_size=3):
+    selected = []
+    for _ in range(len(population)):
+        participants = random.sample(list(enumerate(fitness_scores)), tournament_size)
+        winner = min(participants, key=lambda x: x[1])  # Select the individual with the best (minimum) fitness
+        selected.append(population[winner[0]])
+    return selected
+
+# Step 6: Crossover (Single-Point Crossover)
+def crossover(parent1, parent2):
+    if random.random() < crossover_rate:
+        point = random.randint(1, len(parent1) - 1)
+        offspring1 = parent1[:point] + parent2[point:]
+        offspring2 = parent2[:point] + parent1[point:]
+        return offspring1, offspring2
+    return parent1, parent2
+
+# Step 7: Mutation
+def mutate(individual, bounds, mutation_rate):
+    for i in range(len(individual)):
+        if random.random() < mutation_rate:
+            individual[i] = random.uniform(bounds[0], bounds[1])
+    return individual
+
+# Step 8: Gene Expression
+# In this case, the genetic sequence itself is the functional solution,
+# so no additional translation step is required.
+
+# Step 9: Main Iterative Process
+def gene_expression_algorithm():
+    # Initialize Population
+    population = initialize_population(population_size, num_genes, gene_bounds)
+    
+    best_solution = None
+    best_fitness = float('inf')
+    
+    for generation in range(generations):
+        # Evaluate Fitness
+        fitness_scores = evaluate_population(population)
+        
+        # Track the Best Solution
+        current_best_index = np.argmin(fitness_scores)
+        if fitness_scores[current_best_index] < best_fitness:
+            best_fitness = fitness_scores[current_best_index]
+            best_solution = population[current_best_index]
+        
+        # Selection
+        selected_population = tournament_selection(population, fitness_scores)
+        
+        # Crossover and Mutation
+        next_generation = []
+        for i in range(0, population_size, 2):
+            parent1 = selected_population[i]
+            parent2 = selected_population[i + 1]
+            offspring1, offspring2 = crossover(parent1, parent2)
+            next_generation.append(mutate(offspring1, gene_bounds, mutation_rate))
+            next_generation.append(mutate(offspring2, gene_bounds, mutation_rate))
+        
+        population = next_generation
+        
+        # Print progress
+        print(f"Generation {generation + 1}/{generations}, Best Fitness: {best_fitness:.6f}")
+    
+    # Step 10: Output the Best Solution
+    print("\nBest Solution Found:", best_solution)
+    print("Best Fitness Value:", best_fitness)
+
+# Step 10: Run the Algorithm
+if __name__ == "__main__":
+    gene_expression_algorithm()
+
+
+Output:
+Generation 1/25, Best Fitness: 49.484933
+Generation 2/25, Best Fitness: 41.394067
+Generation 3/25, Best Fitness: 39.180503
+Generation 4/25, Best Fitness: 37.379888
+Generation 5/25, Best Fitness: 33.726911
+Generation 6/25, Best Fitness: 23.713555
+Generation 7/25, Best Fitness: 15.990238
+Generation 8/25, Best Fitness: 15.990238
+Generation 9/25, Best Fitness: 14.574224
+Generation 10/25, Best Fitness: 14.574224
+Generation 11/25, Best Fitness: 14.574224
+Generation 12/25, Best Fitness: 14.574224
+Generation 13/25, Best Fitness: 14.574224
+Generation 14/25, Best Fitness: 13.644266
+Generation 15/25, Best Fitness: 12.469085
+Generation 16/25, Best Fitness: 10.061363
+Generation 17/25, Best Fitness: 6.755604
+Generation 18/25, Best Fitness: 4.379193
+Generation 19/25, Best Fitness: 4.379193
+Generation 20/25, Best Fitness: 4.379193
+Generation 21/25, Best Fitness: 4.379193
+Generation 22/25, Best Fitness: 4.379193
+Generation 23/25, Best Fitness: 4.379193
+Generation 24/25, Best Fitness: 4.379193
+Generation 25/25, Best Fitness: 4.379193
+
+Best Solution Found: [0.1956637320223198, 1.2277435526145917, -0.8043843975228429, -0.7094773948318185, 0.15407105141235533, -0.3033338790683775, -0.11774654333443202, -0.8708685494610506, -0.29805104108627667, -0.8404178901929367]
+Best Fitness Value: 4.379193223001671
