@@ -1,0 +1,113 @@
+import numpy as np
+
+# Step 1: Define the Problem
+# Sphere Function: f(x) = sum(x_i^2), where x is a vector
+def fitness_function(position):
+    return np.sum(position ** 2)
+
+# Step 2: Initialize Parameters
+num_cells = 100            # Total number of cells
+grid_size = (10, 10)       # 2D grid size (rows, columns)
+solution_dim = 2           # Dimensionality of the solution space
+iterations = 100           # Number of iterations
+neighborhood_radius = 1    # Radius to define neighbors in the grid
+search_space_bounds = [-5.0, 5.0]  # Range of values in the solution space
+
+# Step 3: Initialize Population
+def initialize_population(grid_size, solution_dim, bounds):
+    population = np.random.uniform(bounds[0], bounds[1], (grid_size[0], grid_size[1], solution_dim))
+    return population
+
+# Step 4: Evaluate Fitness
+def evaluate_fitness(population):
+    fitness = np.zeros((grid_size[0], grid_size[1]))
+    for i in range(grid_size[0]):
+        for j in range(grid_size[1]):
+            fitness[i, j] = fitness_function(population[i, j])
+    return fitness
+
+# Step 5: Get Neighbor Indices
+def get_neighbors(grid_size, i, j, radius):
+    neighbors = []
+    for di in range(-radius, radius + 1):
+        for dj in range(-radius, radius + 1):
+            ni, nj = (i + di) % grid_size[0], (j + dj) % grid_size[1]  # Wrap-around boundaries
+            if (di != 0 or dj != 0):  # Exclude the current cell
+                neighbors.append((ni, nj))
+    return neighbors
+
+# Step 5: Update States (Cell Solutions)
+def update_population(population, fitness, grid_size, radius):
+    new_population = np.copy(population)
+    for i in range(grid_size[0]):
+        for j in range(grid_size[1]):
+            neighbors = get_neighbors(grid_size, i, j, radius)
+            # Find the best neighbor (minimum fitness)
+            best_neighbor = population[i, j]
+            best_fitness = fitness[i, j]
+            for ni, nj in neighbors:
+                if fitness[ni, nj] < best_fitness:
+                    best_neighbor = population[ni, nj]
+                    best_fitness = fitness[ni, nj]
+            # Update the current cell towards the best neighbor
+            new_population[i, j] = (population[i, j] + best_neighbor) / 2.0  # Move towards best neighbor
+    return new_population
+
+# Step 6: Main Iterative Process
+def parallel_cellular_algorithm():
+    # Initialize Population
+    population = initialize_population(grid_size, solution_dim, search_space_bounds)
+    
+    # Iterate for a fixed number of steps
+    best_solution = None
+    best_fitness = float('inf')
+    
+    for iteration in range(iterations):
+        fitness = evaluate_fitness(population)
+        
+        # Track the best solution
+        min_fitness = np.min(fitness)
+        if min_fitness < best_fitness:
+            best_fitness = min_fitness
+            best_indices = np.unravel_index(np.argmin(fitness), fitness.shape)
+            best_solution = population[best_indices]
+        
+        # Update Population based on neighbors
+        population = update_population(population, fitness, grid_size, neighborhood_radius)
+        
+        # Print progress
+        print(f"Iteration {iteration+1}/{iterations}, Best Fitness: {best_fitness:.6f}")
+    
+    # Output the best solution found
+    print("\nBest Solution Found:", best_solution)
+    print("Best Fitness Value:", best_fitness)
+
+# Step 7: Run the Algorithm
+if __name__ == "__main__":
+    parallel_cellular_algorithm()
+
+
+Output:
+Iteration 1/20, Best Fitness: 0.480402
+Iteration 2/20, Best Fitness: 0.080360
+Iteration 3/20, Best Fitness: 0.019545
+Iteration 4/20, Best Fitness: 0.002483
+Iteration 5/20, Best Fitness: 0.002382
+Iteration 6/20, Best Fitness: 0.002218
+Iteration 7/20, Best Fitness: 0.000391
+Iteration 8/20, Best Fitness: 0.000023
+Iteration 9/20, Best Fitness: 0.000016
+Iteration 10/20, Best Fitness: 0.000002
+Iteration 11/20, Best Fitness: 0.000001
+Iteration 12/20, Best Fitness: 0.000000
+Iteration 13/20, Best Fitness: 0.000000
+Iteration 14/20, Best Fitness: 0.000000
+Iteration 15/20, Best Fitness: 0.000000
+Iteration 16/20, Best Fitness: 0.000000
+Iteration 17/20, Best Fitness: 0.000000
+Iteration 18/20, Best Fitness: 0.000000
+Iteration 19/20, Best Fitness: 0.000000
+Iteration 20/20, Best Fitness: 0.000000
+
+Best Solution Found: [ 4.52424603e-06 -3.90935704e-06]
+Best Fitness Value: 3.575187462848841e-11
